@@ -26,11 +26,22 @@ const OBS_CHICA_ESCALA = Vector2(6.0, 6.0)
 const OBS_GRANDE_ESCALA = Vector2(6.5, 6.5)
 const BASE_CAJA_Y = 452.0
 
-# Medidas fijas del boton rosado de inicio
+# Medidas fijas de botones y carteles flotantes
 const BOTON_INICIO_POS = Vector2(405, 275)
 const BOTON_INICIO_ESCALA = Vector2(4.0, 4.0)
 
-# Ubicacion y tamano del sol en la esquina superior izquierda (solo Nivel 3)
+const BOTON_INST_POS = Vector2(355, 395)
+const BOTON_INST_ESCALA = Vector2(4.0, 4.0)
+
+const BOTON_SALIDA_CARTEL_POS = Vector2(955, 130)
+const BOTON_SALIDA_CARTEL_ESCALA = Vector2(5.5, 5.5)
+const CARTEL_ESCALA = Vector2(6.0, 6.0)
+
+# Ley: posicion y tamano exacto de gatos final sobre el tejado
+const GATOS_FINAL_POS = Vector2(1000, 700)
+const GATOS_FINAL_ESCALA = Vector2(5.1, 5.6)
+
+# Ubicacion y tamano del sol (solo Nivel 3)
 const SOL_POS = Vector2(576, 120)
 const SOL_ESCALA = Vector2(4.0, 4.0)
 
@@ -42,6 +53,9 @@ const LIMITE_IZQ = 85.0
 const LIMITE_DER = 1065.0
 
 var pantalla_inicio = preload("res://sprites/inicio (1).png")
+var pantalla_instrucciones = preload("res://sprites/Instrucciones.png")
+var pantalla_perdiste = preload("res://sprites/perdiste.png")
+var pantalla_felicidades = preload("res://sprites/felicidades.png")
 var fondo_1 = preload("res://sprites/ambiente 1.png")
 var fondo_2 = preload("res://sprites/ambiente 2.png")
 var fondo_3 = preload("res://sprites/ambiente 3 (1).png")
@@ -84,11 +98,30 @@ var vels_obstaculos = [VELOCIDAD_OBS_CHICA, VELOCIDAD_OBS_GRANDE, VELOCIDAD_OBS_
 
 @onready var boton_jugar = $boton
 @onready var area_boton_jugar = $boton/Area2D
+@onready var boton_instrucciones = $instruccions
+@onready var area_boton_instrucciones = $instruccions/Area2D
+@onready var boton_salida = $salida
+@onready var area_boton_salida = $salida/Area2D
 @onready var sol = $sol
+@onready var gatos_final = $gatos
+
+# Nodos de audio
+@onready var sfx_golpes = $goples
+@onready var sfx_perro_desaparece = $"perro desaparece"
+@onready var sfx_perro_final = $"perro desaparece final"
+@onready var sfx_gato_desaparece = $"gato desaparece"
+@onready var sfx_salto = $salto
+@onready var sfx_recuperar_gato = $"recuperar gato"
+
+@onready var mus_menu = $"menu principal"
+@onready var mus_garden = $garden
+@onready var mus_house = $house
+@onready var mus_roof = $roof
 
 var base_caja_1: Sprite2D
 var base_caja_2: Sprite2D
 var base_caja_grande: Sprite2D
+var cartel_flotante: Sprite2D
 var boton_accion: Button
 
 func _ready():
@@ -101,7 +134,6 @@ func _ready():
 	perro.stop()
 	perro.frame = 0
 	
-	# Configura el sol pero lo mantiene oculto hasta la pelea final
 	sol.position = SOL_POS
 	sol.scale = SOL_ESCALA
 	sol.z_as_relative = false
@@ -109,6 +141,8 @@ func _ready():
 	sol.visible = false
 	sol.play("default")
 	
+	gatos_final.visible = false
+	configurar_audios()
 	crear_cajas_soporte()
 	configurar_obstaculos_iniciales()
 	configurar_estilo_contador(contador_gato, Vector2(40, 25))
@@ -117,9 +151,55 @@ func _ready():
 	contador_perro.visible = false
 	mostrar_pantalla_inicio()
 
+func configurar_audios():
+	# Fuerza loop infinito en las canciones de fondo
+	for m in [mus_menu, mus_garden, mus_house, mus_roof]:
+		if m and m.stream is AudioStreamMP3:
+			m.stream.loop = true
+			
+	# Asegura que los efectos cortos suenen una sola vez
+	for e in [sfx_golpes, sfx_perro_desaparece, sfx_perro_final, sfx_gato_desaparece, sfx_salto, sfx_recuperar_gato]:
+		if e and e.stream is AudioStreamMP3:
+			e.stream.loop = false
+
+func detener_musica_combate():
+	mus_garden.stop()
+	mus_house.stop()
+	mus_roof.stop()
+func limpiar_cartel_flotante():
+	if cartel_flotante:
+		cartel_flotante.queue_free()
+		cartel_flotante = null
+
+func mostrar_cartel_con_salida(textura_cartel: Texture2D):
+	limpiar_cartel_flotante()
+	cartel_flotante = Sprite2D.new()
+	cartel_flotante.texture = textura_cartel
+	cartel_flotante.position = Vector2(576, 324)
+	cartel_flotante.scale = CARTEL_ESCALA
+	cartel_flotante.z_as_relative = false
+	cartel_flotante.z_index = 25
+	add_child(cartel_flotante)
+	
+	boton_salida.visible = true
+	boton_salida.modulate = Color.WHITE
+	boton_salida.position = BOTON_SALIDA_CARTEL_POS
+	boton_salida.scale = BOTON_SALIDA_CARTEL_ESCALA
+	boton_salida.z_as_relative = false
+	boton_salida.z_index = 30
+
 func mostrar_pantalla_inicio():
 	en_cinematica = true
 	actualizar_obstaculos_por_escenario(0)
+	limpiar_cartel_flotante()
+	if boton_accion:
+		boton_accion.queue_free()
+		
+	detener_musica_combate()
+	sfx_recuperar_gato.stop()
+	if not mus_menu.playing:
+		mus_menu.play()
+		
 	fondo.texture = pantalla_inicio
 	fondo.z_as_relative = false
 	fondo.z_index = 0
@@ -129,6 +209,10 @@ func mostrar_pantalla_inicio():
 	cria.visible = false
 	jaula.visible = false
 	sol.visible = false
+	gatos_final.visible = false
+	boton_salida.visible = false
+	contador_gato.visible = false
+	contador_perro.visible = false
 	
 	boton_jugar.visible = true
 	boton_jugar.modulate = Color.WHITE
@@ -139,8 +223,19 @@ func mostrar_pantalla_inicio():
 	boton_jugar.stop()
 	boton_jugar.frame = 0
 	
+	boton_instrucciones.visible = true
+	boton_instrucciones.modulate = Color.WHITE
+	boton_instrucciones.position = BOTON_INST_POS
+	boton_instrucciones.scale = BOTON_INST_ESCALA
+	boton_instrucciones.z_as_relative = false
+	boton_instrucciones.z_index = 30
+	
 	if not area_boton_jugar.input_event.is_connected(_al_clicar_boton_jugar):
 		area_boton_jugar.input_event.connect(_al_clicar_boton_jugar)
+	if not area_boton_instrucciones.input_event.is_connected(_al_clicar_instrucciones):
+		area_boton_instrucciones.input_event.connect(_al_clicar_instrucciones)
+	if not area_boton_salida.input_event.is_connected(_al_clicar_salida):
+		area_boton_salida.input_event.connect(_al_clicar_salida)
 
 func _al_clicar_boton_jugar(_viewport: Node, event: InputEvent, _shape_idx: int):
 	if not boton_jugar.visible:
@@ -148,8 +243,27 @@ func _al_clicar_boton_jugar(_viewport: Node, event: InputEvent, _shape_idx: int)
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		boton_jugar.frame = 1
 		await get_tree().create_timer(0.2).timeout
+		mus_menu.stop()
 		boton_jugar.visible = false
+		boton_instrucciones.visible = false
+		boton_salida.visible = false
 		ejecutar_intro()
+
+func _al_clicar_instrucciones(_viewport: Node, event: InputEvent, _shape_idx: int):
+	if not boton_instrucciones.visible:
+		return
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		# No detiene mus_menu para que siga sonando mientras lees instrucciones
+		boton_jugar.visible = false
+		boton_instrucciones.visible = false
+		fondo.texture = pantalla_inicio
+		mostrar_cartel_con_salida(pantalla_instrucciones)
+
+func _al_clicar_salida(_viewport: Node, event: InputEvent, _shape_idx: int):
+	if not boton_salida.visible:
+		return
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		mostrar_pantalla_inicio()
 
 func crear_cajas_soporte():
 	base_caja_grande = Sprite2D.new()
@@ -227,10 +341,12 @@ func actualizar_obstaculos_por_escenario(num: int):
 		lista_obstaculos = [caja_chica_1, caja_grande, caja_chica_2]
 	else:
 		lista_obstaculos = []
+
 func ejecutar_intro():
 	en_cinematica = true
 	actualizar_obstaculos_por_escenario(0)
 	sol.visible = false
+	gatos_final.visible = false
 	fondo.texture = fondo_1
 	gato.visible = true
 	gato.position = Vector2(280, 435)
@@ -269,7 +385,6 @@ func ejecutar_intro():
 	t3.tween_property(jaula, "position:x", JAULA_POS_TECHO.x, 1.4)
 	await t3.finished
 	mostrar_boton("CONTINUAR", _al_presionar_continuar)
-
 func mostrar_boton(texto: String, funcion_clic: Callable):
 	if boton_accion:
 		boton_accion.queue_free()
@@ -313,7 +428,14 @@ func iniciar_combate(num_nivel: int, textura_fondo: Texture2D):
 	reiniciar_posiciones_obstaculos()
 	actualizar_obstaculos_por_escenario(num_nivel)
 	
-	# El sol solo aparece en la pelea final (Escenario 3)
+	detener_musica_combate()
+	if num_nivel == 1:
+		mus_garden.play()
+	elif num_nivel == 2:
+		mus_house.play()
+	elif num_nivel == 3:
+		mus_roof.play()
+	
 	sol.visible = (num_nivel == 3)
 	if num_nivel == 3:
 		sol.play("default")
@@ -321,8 +443,11 @@ func iniciar_combate(num_nivel: int, textura_fondo: Texture2D):
 	jaula.visible = (num_nivel == 3)
 	jaula.position = JAULA_POS_TECHO
 	cria.visible = false
+	gatos_final.visible = false
 	
 	gato.visible = true
+	gato.modulate = Color.WHITE
+	gato.frame = 0
 	perro.visible = true
 	perro.modulate = Color.WHITE
 	perro.frame = 0
@@ -370,6 +495,7 @@ func _input(event):
 func golpear_gato():
 	gato.frame = 1
 	if perro_vivo and area_gato.overlaps_area(area_perro):
+		sfx_golpes.play()
 		vida_perro -= 1
 		actualizar_contadores()
 		perro.modulate = Color.RED
@@ -377,12 +503,17 @@ func golpear_gato():
 			perro_vivo = false
 			perro.visible = false
 			perro.modulate = Color.WHITE
+			detener_musica_combate()
 			if nivel_actual == 1:
+				sfx_perro_desaparece.play()
 				en_cinematica = true
 				mostrar_boton("CONTINUE NEXT LEVEL", _al_presionar_nivel_2)
 			elif nivel_actual == 2:
+				sfx_perro_desaparece.play()
 				en_cinematica = true
 				mostrar_boton("CONTINUE NEXT LEVEL", _al_presionar_nivel_3)
+			elif nivel_actual == 3:
+				sfx_perro_final.play()
 	await get_tree().create_timer(0.2).timeout
 	gato.frame = 0
 	if perro_vivo:
@@ -391,6 +522,7 @@ func golpear_gato():
 func golpear_perro():
 	perro.frame = 1
 	if gato_vivo and area_perro.overlaps_area(area_gato):
+		sfx_golpes.play()
 		vida_gato -= 1
 		actualizar_contadores()
 		gato.modulate = Color.RED
@@ -398,10 +530,21 @@ func golpear_perro():
 			gato_vivo = false
 			gato.visible = false
 			gato.modulate = Color.WHITE
+			detener_musica_combate()
+			sfx_gato_desaparece.play()
+			mostrar_derrota()
 	await get_tree().create_timer(0.2).timeout
 	perro.frame = 0
 	if gato_vivo:
 		gato.modulate = Color.WHITE
+
+func mostrar_derrota():
+	en_cinematica = true
+	if boton_accion:
+		boton_accion.queue_free()
+	contador_gato.visible = false
+	contador_perro.visible = false
+	mostrar_cartel_con_salida(pantalla_perdiste)
 
 func obtener_rectangulo_obs(obs: Node2D) -> Rect2:
 	var col = obs.get_node("Area2D/CollisionShape2D") as CollisionShape2D
@@ -477,6 +620,7 @@ func mover_personaje_solido(pj: Node2D, vel_y: float, en_suelo: bool, suelo_base
 	if Input.is_key_pressed(tecla_salto) and en_suelo:
 		vel_y = FUERZA_SALTO
 		en_suelo = false
+		sfx_salto.play()
 		
 	var pies_y_ant = pj.position.y + altura_pies
 	vel_y += GRAVEDAD * delta
@@ -514,3 +658,22 @@ func liberar_cria():
 	cria.z_index = 10
 	cria.scale = CRIA_ESCALA
 	cria.position = Vector2(JAULA_POS_TECHO.x, 460)
+	
+	await get_tree().create_timer(1.0).timeout
+	en_cinematica = true
+	gato.visible = false
+	cria.visible = false
+	sol.visible = false
+	contador_gato.visible = false
+	contador_perro.visible = false
+	
+	fondo.texture = fondo_3
+	mostrar_cartel_con_salida(pantalla_felicidades)
+	
+	gatos_final.visible = true
+	gatos_final.position = GATOS_FINAL_POS
+	gatos_final.scale = GATOS_FINAL_ESCALA
+	gatos_final.z_as_relative = false
+	gatos_final.z_index = 26
+	
+	sfx_recuperar_gato.play()

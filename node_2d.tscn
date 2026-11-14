@@ -13,6 +13,18 @@
 [ext_resource type="Texture2D" uid="uid://dsjxebghhamoq" path="res://sprites/start (5).png" id="11_hqns4"]
 [ext_resource type="Texture2D" uid="uid://hq8370cq6u8l" path="res://sprites/instruccions.png" id="12_0h7mo"]
 [ext_resource type="Texture2D" uid="uid://v42bssi7f6jr" path="res://sprites/solteletubi.png" id="12_x0ka3"]
+[ext_resource type="Texture2D" uid="uid://bw08y041013rv" path="res://sprites/X.png" id="14_nr8wp"]
+[ext_resource type="Texture2D" uid="uid://diee3mjfa15gy" path="res://sprites/gatos.png" id="15_d2bti"]
+[ext_resource type="AudioStream" uid="uid://bxsp0e85mceka" path="res://sonidos/golpes.mp3" id="16_bjha6"]
+[ext_resource type="AudioStream" uid="uid://bqrnhlaqrhytq" path="res://sonidos/defeated-dog.mp3" id="17_gt76g"]
+[ext_resource type="AudioStream" uid="uid://buwlgp0avmvat" path="res://sonidos/final-defeated.mp3" id="18_1fr6y"]
+[ext_resource type="AudioStream" uid="uid://b1yyre7gbe0og" path="res://sonidos/game-over-cat.mp3" id="19_2hxjc"]
+[ext_resource type="AudioStream" uid="uid://bcy8a0050pflw" path="res://sonidos/garden.mp3" id="20_ebxd8"]
+[ext_resource type="AudioStream" uid="uid://bvbe067wkpogy" path="res://sonidos/house.mp3" id="21_2u7jv"]
+[ext_resource type="AudioStream" uid="uid://ddsbtnvo5adb" path="res://sonidos/intro.mp3" id="22_24dk6"]
+[ext_resource type="AudioStream" uid="uid://c2kftwfsrsuje" path="res://sonidos/player-jump.mp3" id="23_mryly"]
+[ext_resource type="AudioStream" uid="uid://7olrk0c2whg5" path="res://sonidos/roof.mp3" id="24_kq1c5"]
+[ext_resource type="AudioStream" uid="uid://drkptaneev1d1" path="res://sonidos/win.mp3" id="25_ornx7"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_elvdf"]
 atlas = ExtResource("2_0hol4")
@@ -767,6 +779,9 @@ animations = [{
 "speed": 5.0
 }]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7ljdv"]
+size = Vector2(10, 10.499996)
+
 [node name="Node2D" type="Node2D" unique_id=600455586]
 script = ExtResource("1_0hol4")
 
@@ -805,15 +820,16 @@ offset_right = 40.0
 offset_bottom = 23.0
 
 [node name="Label2" type="Label" parent="." unique_id=1341011537]
-offset_left = -31.0
-offset_right = 40.0
-offset_bottom = 23.0
+offset_left = -125.0
+offset_top = 119.0
+offset_right = -54.0
+offset_bottom = 142.0
 
 [node name="cria" type="AnimatedSprite2D" parent="." unique_id=1411102145]
 position = Vector2(-203.99998, 164.99998)
 scale = Vector2(5.05, 5)
 sprite_frames = SubResource("SpriteFrames_gat80")
-frame_progress = 0.59760165
+frame_progress = 0.48034513
 
 [node name="cria en carcel" type="AnimatedSprite2D" parent="." unique_id=913176595]
 position = Vector2(-319, 27.000002)
@@ -842,7 +858,7 @@ shape = SubResource("RectangleShape2D_opey3")
 position = Vector2(1305, 587)
 scale = Vector2(9, 9)
 sprite_frames = SubResource("SpriteFrames_j8hdg")
-frame_progress = 0.7591863
+frame_progress = 0.6419382
 
 [node name="Area2D" type="Area2D" parent="roca chica2" unique_id=533330318]
 
@@ -908,14 +924,14 @@ sprite_frames = SubResource("SpriteFrames_nhy6f")
 position = Vector2(-10.875, 12.5)
 shape = SubResource("RectangleShape2D_134at")
 
-[node name="intruccions" type="AnimatedSprite2D" parent="." unique_id=1654749402]
+[node name="instruccions" type="AnimatedSprite2D" parent="." unique_id=1654749402]
 position = Vector2(-335, 276)
 scale = Vector2(4, 4)
 sprite_frames = SubResource("SpriteFrames_fm8k7")
 
-[node name="Area2D" type="Area2D" parent="intruccions" unique_id=174942335]
+[node name="Area2D" type="Area2D" parent="instruccions" unique_id=174942335]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="intruccions/Area2D" unique_id=2040810353]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="instruccions/Area2D" unique_id=2040810353]
 position = Vector2(0, 13.25)
 shape = SubResource("RectangleShape2D_134at")
 
@@ -923,3 +939,58 @@ shape = SubResource("RectangleShape2D_134at")
 position = Vector2(-876, 91)
 scale = Vector2(5, 5)
 sprite_frames = SubResource("SpriteFrames_x8u64")
+
+[node name="salida" type="Sprite2D" parent="." unique_id=1812597920]
+position = Vector2(-358, 675)
+scale = Vector2(6, 6)
+texture = ExtResource("14_nr8wp")
+
+[node name="Area2D" type="Area2D" parent="salida" unique_id=539680075]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="salida/Area2D" unique_id=1743836502]
+position = Vector2(-2.833332, 1.8333384)
+shape = SubResource("RectangleShape2D_7ljdv")
+
+[node name="gatos" type="Sprite2D" parent="." unique_id=1199128294]
+position = Vector2(-307.5, 911.99994)
+scale = Vector2(5.0722218, 5.6000004)
+texture = ExtResource("15_d2bti")
+
+[node name="goples" type="AudioStreamPlayer2D" parent="." unique_id=1720105853]
+stream = ExtResource("16_bjha6")
+volume_db = 1.962
+
+[node name="perro desaparece" type="AudioStreamPlayer2D" parent="." unique_id=1396890079]
+stream = ExtResource("17_gt76g")
+volume_db = 0.981
+
+[node name="perro desaparece final" type="AudioStreamPlayer2D" parent="." unique_id=1914117382]
+stream = ExtResource("18_1fr6y")
+volume_db = 1.962
+
+[node name="gato desaparece" type="AudioStreamPlayer2D" parent="." unique_id=723184206]
+stream = ExtResource("19_2hxjc")
+volume_db = 0.982
+
+[node name="garden" type="AudioStreamPlayer2D" parent="." unique_id=1280392688]
+stream = ExtResource("20_ebxd8")
+volume_db = 24.0
+
+[node name="house" type="AudioStreamPlayer2D" parent="." unique_id=1512582142]
+stream = ExtResource("21_2u7jv")
+volume_db = 24.0
+
+[node name="menu principal" type="AudioStreamPlayer2D" parent="." unique_id=2066529114]
+stream = ExtResource("22_24dk6")
+volume_db = 20.604
+
+[node name="salto" type="AudioStreamPlayer2D" parent="." unique_id=820303760]
+stream = ExtResource("23_mryly")
+volume_db = -3.925
+
+[node name="roof" type="AudioStreamPlayer2D" parent="." unique_id=1867503085]
+stream = ExtResource("24_kq1c5")
+volume_db = 22.566
+
+[node name="recuperar gato" type="AudioStreamPlayer2D" parent="." unique_id=1403860321]
+stream = ExtResource("25_ornx7")
